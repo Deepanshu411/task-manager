@@ -1,4 +1,6 @@
 import express from 'express';
+import multer from 'multer';
+import sharp from 'sharp';
 
 import User from '../models/user.js';
 import auth from '../middleware/auth.js';
@@ -79,5 +81,47 @@ routes.delete('/users/me', auth, async (req, res) => {
         res.status(500).send(`Error: ${err.message}`);
     }
 });
+
+const upload = multer({
+    limits: {
+        fileSize: 2000000
+    },
+    fileFilter(req, file, cb) {
+        if(!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            return cb(new Error('Error: Please upload an image!'));
+        };
+        cb(undefined, true);
+    }
+});
+
+routes.post('/users/me/avatar', auth, upload.single('upload'), async (req, res) => {
+    const buffer = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer();
+    req.user.avatar = buffer;
+    await req.user.save();
+    res.status(200).send('Avatar uploaded successfully!');
+}, (err, req, res, next) => {
+    res.status(400).send(`Error: ${err.message}`);
+});
+
+routes.delete('/users/me/avatar', auth, async (req, res) => {
+    req.user.avatar = undefined;
+    await req.user.save();
+    res.status(200).send('Avatar deleted successfully!');
+});
+
+routes.get('/users/:id/avatar', async(req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user || !user.avatar) {
+            throw new Error();
+        }
+
+        res.set('Content-Type', 'image/png');
+        res.send(user.avatar); 
+   } catch (err) {
+        res.status(404).send();
+    }
+})
 
 export default routes;
