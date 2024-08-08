@@ -8,7 +8,7 @@ const routes = express.Router();
 routes.post('/tasks', auth, async (req, res) => {
     const task = new Task({
         ...req.body,
-        userId: req.user._id
+        owner: req.user._id
     });
     try {
         const result = await task.save();
@@ -20,7 +20,7 @@ routes.post('/tasks', auth, async (req, res) => {
 
 routes.get('/tasks', auth, async (req, res) => {
     try {
-        const tasks = await Task.find({ userId: req.user._id });
+        const tasks = await Task.find({ owner: req.user._id });
         res.status(200).send(tasks);
     } catch(err) {
         res.status(500).send(`Error: ${err.message}`);
@@ -30,7 +30,7 @@ routes.get('/tasks', auth, async (req, res) => {
 routes.get('/tasks/:id', auth, async (req, res) => {
     const id = req.params.id
     try {
-        const task = await Task.findOne({ id, owner: req.user._id });
+        const task = await Task.findOne({ _id: id, owner: req.user._id });
         if (!task) {
             return res.status(404).send('Error: Task not found!');
         }
@@ -51,8 +51,7 @@ routes.patch('/tasks/:id', auth, async (req, res) => {
 
     try {
         const id = req.params.id;
-        // const task = await Task.findOneAndUpdate({ id, userId: req.user.id });
-        const task = await Task.findOne({ id, owner: req.user._id });
+        const task = await Task.findOne({ _id: id, owner: req.user._id });
         if (!task) {
             return res.status(404).send('Error: task not found!');
         };
@@ -67,7 +66,7 @@ routes.patch('/tasks/:id', auth, async (req, res) => {
 routes.delete('/tasks/:id', auth, async (req, res) => {
     try {
         const id = req.params.id;
-        const task = await Task.findOneAndDelete({ id, userId: req.user._id });
+        const task = await Task.findOneAndDelete({ _id: id, owner: req.user._id });
         if (!task) {
             res.status(400).send('Error: Task not found');
         }
