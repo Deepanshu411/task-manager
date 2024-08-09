@@ -56,6 +56,9 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 });
 
+userSchema.set('toObject', { virtuals: true });
+userSchema.set('toJSON', { virtuals: true });
+
 userSchema.virtual('tasks', {
     ref: 'Task',
     localField: '_id',

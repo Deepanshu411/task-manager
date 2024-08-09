@@ -1,6 +1,7 @@
 import express from 'express';
 
 import Task from '../models/task.js';
+import User from '../models/user.js';
 import auth from '../middleware/auth.js';
 
 const routes = express.Router();
@@ -20,7 +21,7 @@ routes.post('/tasks', auth, async (req, res) => {
 
 routes.get('/tasks', auth, async (req, res) => {
     try {
-        const match = {owner: req.user._id };
+        const match = {};
         const sort = {};
 
         if (req.query.completed) {
@@ -31,12 +32,18 @@ routes.get('/tasks', auth, async (req, res) => {
             const parts = req.query.sortBy.split(':');
             sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
         }
+        
+        const user = await User.find({ _id: req.user._id }).populate({
+            path: 'tasks',
+            match,
+            options: {
+                limit: req.query.limit,
+                skip: req.query.skip,
+                sort
+            }
+        })
+        res.status(200).send(user[0].tasks);
 
-        const tasks = await Task.find(match)
-            .limit(req.query.limit)
-            .skip(req.query.skip)
-            .sort(sort);
-        res.status(200).send(tasks);
     } catch(err) {
         res.status(500).send(`Error: ${err.message}`);
     }
