@@ -90,11 +90,11 @@ routes.delete('/tasks/:id', auth, async (req, res) => {
         const id = req.params.id;
         const task = await Task.findOneAndDelete({ _id: id, owner: req.user._id });
         if (!task) {
-            res.status(400).send('Error: Task not found');
+            return res.status(400).send('Error: Task not found');
         }
         res.status(200).send('Task successfully deleted!');
     } catch(err) {
-        res.status(500).send(`Error: ${err}`);
+        res.status(500).send(`Error: ${err.message}`);
     }
 });
 
